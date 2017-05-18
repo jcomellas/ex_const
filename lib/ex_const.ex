@@ -11,7 +11,7 @@ defmodule Const do
   constant or enumerated value to its corresponding literal value or function
   call, depending on the context where it was used.
 
-  A module holding some `const` macros can be defined in the following way:
+  A module using `const` or `enum` macros can be defined in the following way:
 
       defmodule Settings
         use Const
