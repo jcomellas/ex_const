@@ -9,8 +9,8 @@ call, depending on the context where it was used.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `ex_const` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `ex_const` to your list of dependencies
+in `mix.exs`:
 
 ```elixir
 def deps do
@@ -106,16 +106,18 @@ Or with the expanded syntax:
     end
 
 e.g.
-
-    enum country_code, do: [argentina: "AR", italy: "IT", usa: "US"]
+```elixir
+enum country_code, do: [argentina: "AR", italy: "IT", usa: "US"]
+```
 
 Or:
-
-    enum country_code do
-      argentina "AR"
-      italy     "IT"
-      usa       "US"
-    end
+```elixir
+enum country_code do
+  argentina "AR"
+  italy     "IT"
+  usa       "US"
+end
+```
 
 For each `enum` instance, the macro will create the following additional macros
 and functions in the module where it was invoked:
@@ -131,10 +133,11 @@ and functions in the module where it was invoked:
      `enum` will be used and the other ones will be disregarded.
 
 e.g.
-
-    defmacro country_code(atom) :: String.t
-    def country_code_enum(atom) :: String.t
-    def from_country_code(String.t) :: atom
+```elixir
+defmacro country_code(atom) :: String.t
+def country_code_enum(atom) :: String.t
+def from_country_code(String.t) :: atom
+```
 
 The enumerated values can be accessed with a function call:
 
