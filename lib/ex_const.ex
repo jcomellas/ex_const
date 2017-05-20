@@ -200,7 +200,7 @@ defmodule Const do
   Two syntaxes are supported, the compact and the expanded one, very much like
   most constructs in Elixir. Here's a sample of what it looks like"
 
-      defmodule Cfg
+      defmodule Defs
         use Const
 
         enum stock, do: [apple: "AAPL", facebook: "FB", google: "GOOG"]
@@ -220,7 +220,7 @@ defmodule Const do
   Given that the macro will replace its invocation with the literal value, it
   can be used in a match expressions like the following one:
 
-      Cfg.stock(:google) = "GOOG"
+      Defs.stock(:google) = "GOOG"
 
   """
   defmacro enum(quoted_name, do: quoted_values) do
