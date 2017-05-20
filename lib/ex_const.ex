@@ -193,18 +193,17 @@ defmodule Const do
 
   @doc false
   defmacro __after_compile__(env) do
-    consts = env.module
-    |> Module.get_attribute(:consts)
-    |> Enum.reverse()
-    |> Enum.map(fn {name, quoted_value} -> define_const(name, quoted_value, env) end)
-
-    enums = env.module
-    |> Module.get_attribute(:enums)
-    |> Enum.reverse()
-    |> Enum.map(fn {name, quoted_value} -> define_enum(name, quoted_value, env) end)
-
+    consts = generate(:consts, &define_const/3, env)
+    enums = generate(:enums, &define_enum/3, env)
     # IO.puts("AST for #{env.module}: #{inspect [consts, enums]}")
     [consts, enums]
+  end
+
+  defp generate(attr, define, env) do
+    env.module
+    |> Module.get_attribute(attr)
+    |> Enum.reverse()
+    |> Enum.map(fn {name, quoted_value} -> define.(name, quoted_value, env) end)
   end
 
   @doc """
@@ -292,26 +291,32 @@ defmodule Const do
   end
 
   defp define_enum(name, quoted_values, env) when is_atom(name) do
-    # Evaluate expressions that can be resolved at compile-time to convert them
-    # to constants.
+    # To implement an enumerated constant we have to:
+    #
+    #   1. Evaluate the expressions assigned to each of them that can be
+    #      resolved at compile-time to convert them to literal values.
+    #   2. Define a function to be used as fallback when the enum is used in a
+    #      context that cannot be resolved at compile-time. The function will be
+    #      named after the enum, adding the suffix `_enum` to it.
+    #      e.g. for an `enum` named `color` the function will be `color_enum/1`.
+    #   3. We also define the macro with the enum's name that will expand every
+    #      reference to the enumerated constant to its literal value (if the
+    #      reference can be resolved at compile-time) or with a function
+    #      invocation (if it has to be resolved at run-time).
+    #   4. Define a function that will retrieve the enum key given an assigned
+    #      value. The function will be named appending `from_` to the enum's
+    #      name. e.g. for an `enum` named `color` the function will be `from_color/1`.
+    #
     # IO.puts("Creating '#{name}' enum for values: #{inspect quoted_values}")
     eval_values = eval_quoted_enum(name, quoted_values, env)
     # IO.puts("Creating '#{name}' enum for evaluated values: #{inspect eval_values}")
     if Keyword.keyword?(eval_values) do
-      # To implement an enumerated constant we have to define a function to be
-      # used as fallback when the constant is used in a context that cannot be
-      # resolved at compile-time. The function will be named after the enum,
-      # adding the suffix `_enum` to it.
-      # e.g. for a `const` named `color` the function will be `color_enum/1`.
       fun_name = Atom.to_string(name) <> "_enum"
       |> String.to_atom()
       fallback_fun = define_enum_fallback_fun(name, fun_name, eval_values)
-      # We also define the macro with the enum's name that will expand every
-      # reference to the enumerated constant to its literal value (if the
-      # reference can be resolved at compile-time) or with a function invocation
-      # (if it has to be resolved at run-time).
       expand_macro = define_enum_expand_macro(name, fun_name, eval_values, env)
-      expr = [fallback_fun, expand_macro]
+      inverse_fun = define_enum_inverse_fun(name, eval_values)
+      expr = [fallback_fun, expand_macro, inverse_fun]
       # IO.puts("AST generated for '#{name}' enum macro: #{inspect expr}")
       expr
     else
@@ -331,7 +336,29 @@ defmodule Const do
     end
     quoted_fun_tail = quote do
       def unquote(fun_name)(key) do
-        raise Const.Error, reason: :fetch, name: unquote(name), key: unescape_var(key)
+        raise Const.Error, reason: :fetch_key, name: unquote(name), key: unescape_var(key)
+      end
+    end
+    [quoted_fun, quoted_fun_tail]
+  end
+
+  defp define_enum_inverse_fun(name, quoted_values) do
+    fun_name = "from_" <> Atom.to_string(name)
+    |> String.to_atom()
+    # Discard duplicated values in the inverse functions.
+    quoted_fun = quoted_values
+    |> Enum.uniq_by(fn {_key, quoted_value} -> quoted_value end)
+    |> Enum.map(fn {key, quoted_value} ->
+      # IO.puts("Generating inverse function '#{fun_name}' for value #{inspect quoted_value} with key '#{key}'")
+      quote do
+        def unquote(fun_name)(unquote(quoted_value)) do
+          unquote(key)
+        end
+      end
+    end)
+    quoted_fun_tail = quote do
+      def unquote(fun_name)(quoted_value) do
+        raise Const.Error, reason: :fetch_value, name: unquote(name), value: quoted_value
       end
     end
     [quoted_fun, quoted_fun_tail]
@@ -422,8 +449,10 @@ defmodule Const.Error do
         "const or enum '#{name}' was assigned a value that depends on the following unresolved variables: #{inspect opts[:vars]}"
       :assign ->
         "enum '#{name}' was not assigned a list of key-value pairs"
-      :fetch ->
+      :fetch_key ->
         "key '#{opts[:key]}' is not present in enum '#{name}'"
+      :fetch_value ->
+        "value #{inspect opts[:value]} is not assigned to any key in enum '#{name}'"
     end
   end
 end
