@@ -47,14 +47,30 @@ defmodule Const do
 
   ## Single Constants
 
-  The single constants can be accessed just by a nomal function invocation:
+  You can create single constant values by using the `const` macro with the
+  following syntax:
+
+      const <name>, do: <value>
+
+  e.g.
+
+      const version, do: "1.0"
+
+  The macro invocation will create and export another macro with the name that
+  was set in the `const` declaration (e.g. `version/0`) and replace each
+  reference to it with the value that was assigned to it (e.g. `"1.0"`).
+
+  You can use any expression that can be resolved at compile-time as the value
+  for the `const`.
+
+  The single constants can be accessed with a nomal function invocation:
 
       iex> require Settings
       ...> Settings.version
       "1.0"
 
-  They can also be use in match expressions that would normally require a
-  literal value:
+  As the reference to the `const` will be replaced by its literal value, you
+  can even use them in match expressions or in guards. e.g.
 
       iex> require Settings
       ...> Settings.version = "1.0"
@@ -62,7 +78,51 @@ defmodule Const do
 
   ## Enumerated Values
 
-  The enumerated values can also be accessed as a function call:
+  You can create enumerated values by using the `enum` macro with the compact
+  syntax:
+
+      enum <name>, do: [<key_1>: <value_1>, <key_2>: <value_2>, ...]
+
+  Or with the expanded syntax:
+
+      enum <name> do
+        <key_1> <value_1>
+        <key_2> <value_2>
+        [...]
+      end
+
+  e.g.
+
+      enum country_code, do: [argentina: "AR", italy: "IT", usa: "US"]
+
+  Or:
+
+      enum country_code do
+        argentina "AR"
+        italy     "IT"
+        usa       "US"
+      end
+
+  For each `enum` instance, the macro will create the following additional macros
+  and functions in the module where it was invoked:
+
+    1. Macro with the name that was assigned to the `enum`. This macro will
+       replace every reference to itself with its literal value (if it was called
+       with a literal atom as key or was referenced from a macth expression) or
+       with a call to the fallback function.
+    2. Fallback function with a name formed by appending the string `_enum` to
+       the name of the `enum` (e.g. `country_code_enum/1`).
+    3. Function that will retrieve the key corresponding to a value in the `enum`.
+       If there are is more than one key with the same value, the first in the
+       `enum` will be used and the other ones will be disregarded.
+
+  e.g.
+
+      defmacro country_code(atom) :: String.t
+      def country_code_enum(atom) :: String.t
+      def from_country_code(String.t) :: atom
+
+  The enumerated values can be accessed with a function call:
 
       iex> require Settings
       ...> Settings.color(:blue)
@@ -107,8 +167,8 @@ defmodule Const do
       ...> Settings.color_tuple(key)
       {0, 255, 0}
 
-  This works because the `enum` macro adds a function that will act as a
-  fallback in these cases. The name of the function is that of the `enum`
+  This works because the macro replaces the reference to itself with a call to
+  the fallback function. The name of the function is that of the `enum`
   with the `_enum` string appended to it. For example, for an enum named
   `country` the function will be `country_enum/1`. You have to keep this in
   mind when you import the module where the `enum` was defined and restrict
