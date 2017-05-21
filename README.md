@@ -128,9 +128,9 @@ and functions in the module where it was invoked:
      with a call to the fallback function.
   2. Fallback function with a name formed by appending the string `_enum` to
      the name of the `enum` (e.g. `country_code_enum/1`).
-  3. Function that will retrieve the key corresponding to a value in the `enum`.
-     If there are is more than one key with the same value, the first in the
-     `enum` will be used and the other ones will be disregarded.
+  3. Function that will retrieve the key corresponding to a value in the
+     `enum`. If there are is more than one key with the same value, the first
+     one in the `enum` will be used and the duplicates will be disregarded.
 
 e.g.
 ```elixir
