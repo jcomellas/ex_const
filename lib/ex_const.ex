@@ -304,7 +304,7 @@ defmodule Const do
     #      reference can be resolved at compile-time) or with a function
     #      invocation (if it has to be resolved at run-time).
     #   4. Define a function that will retrieve the enum key given an assigned
-    #      value. The function will be named appending `from_` to the enum's
+    #      value. The function will be named prepending `from_` to the enum's
     #      name. e.g. for an `enum` named `color` the function will be `from_color/1`.
     #
     # IO.puts("Creating '#{name}' enum for values: #{inspect quoted_values}")
