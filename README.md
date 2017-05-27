@@ -11,7 +11,6 @@ call, depending on the context where it was used.
 
 The package can be installed by adding `ex_const` to your list of dependencies
 in `mix.exs`:
-
 ```elixir
 def deps do
   [{:ex_const, "~> 0.1.0"}]
@@ -78,17 +77,17 @@ You can use any expression that can be resolved at compile-time as the value
 for the `const`.
 
 The single constants can be accessed with a nomal function invocation:
-
-    iex> require Settings
-    ...> Settings.version
-    "1.0"
+```elixir
+require Settings
+Settings.version
+```
 
 As the reference to the `const` will be replaced by its literal value, you
 can even use them in match expressions or in guards. e.g.
-
-    iex> require Settings
-    ...> Settings.version = "1.0"
-    "1.0"
+```elixir
+require Settings
+Settings.version = "1.0"
+```
 
 ### Enumerated Values
 
@@ -124,7 +123,7 @@ and functions in the module where it was invoked:
 
   1. Macro with the name that was assigned to the `enum`. This macro will
      replace every reference to itself with its literal value (if it was called
-     with a literal atom as key or was referenced from a macth expression) or
+     with a literal atom as key or was referenced from a match expression) or
      with a call to the fallback function.
   2. Fallback function with a name formed by appending the string `_enum` to
      the name of the `enum` (e.g. `country_code_enum/1`).
@@ -140,49 +139,49 @@ def from_country_code(String.t) :: atom
 ```
 
 The enumerated values can be accessed with a function call:
-
-    iex> require Settings
-    ...> Settings.color(:blue)
-    255
+```elixir
+require Settings
+Settings.color(:blue)
+```
 
 And can also be used in match expressions or guards:
-
-    iex> require Settings
-    ...> import Settings
-    ...> value = "AR"
-    ...> case value do
-    ...>   country_code(:argentina) ->
-    ...>     {:ok, "Argentina"}
-    ...>   country_code(:italy) ->
-    ...>     {:ok, "Italy"}
-    ...>   code when code == country_code(:usa) ->
-    ...>     {:ok, "United States"}
-    ...>   _ ->
-    ...>     {:error, {:must_be_one_of, country_codes()}}
-    ...> end
+```elixir
+require Settings
+import Settings
+value = "AR"
+case value do
+  country_code(:argentina) ->
     {:ok, "Argentina"}
+  country_code(:italy) ->
+    {:ok, "Italy"}
+  code when code == country_code(:usa) ->
+    {:ok, "United States"}
+  _ ->
+    {:error, {:must_be_one_of, country_codes()}}
+end
+```
 
 As the expressions assigned to constants will be resolved at compile-time,
 the previous function would be equivalent to the following one:
-
-    iex> value = "AR"
-    ...> case value do
-    ...>   "AR" -> {:ok, "Argentina"}
-    ...>   "IT" -> {:ok, "Italy"}
-    ...>   code when code == "US" -> {:ok, "United States"}
-    ...>   _ -> {:error, {:must_be_one_of, ["AR", "IT", "US"]}}
-    ...> end
-    {:ok, "Argentina"}
+```elixir
+value = "AR"
+case value do
+  "AR" -> {:ok, "Argentina"}
+  "IT" -> {:ok, "Italy"}
+  code when code == "US" -> {:ok, "United States"}
+  _ -> {:error, {:must_be_one_of, ["AR", "IT", "US"]}}
+end
+```
 
 Sometimes, when an `enum` is referenced in the code, the key to its value is
 passed as an expression that cannot be resolved at compile-time. In those
 cases the expression will be expanded to a function invocation instead of to
 a literal value:
-
-    iex> require Settings
-    ...> key = :green
-    ...> Settings.color_tuple(key)
-    {0, 255, 0}
+```elixir
+require Settings
+key = :green
+Settings.color_tuple(key)
+```
 
 This works because the macro replaces the reference to itself with a call to
 the fallback function. The name of the function is that of the `enum`
