@@ -16,6 +16,12 @@ defmodule Demo do
   const test_keyword, do: [one: 1, two: 2, three: 3]
   const test_map, do: %{"abc" => 123, "def" => 456, "ghi" => 789}
 
+  enum single_1 do
+    first "one"
+  end
+
+  enum single_2, do: [first: "one"]
+
   enum color do
     red   bsl(0xff, 16)
     green bsl(0xff, 8)
@@ -135,6 +141,11 @@ defmodule ConstTest do
     import Bitwise
 
     assert color(:red) ||| color(:green) ||| color(:blue) = 0xffffff
+  end
+
+  test "enum with single value" do
+    assert Demo.single_1(:first) = "one"
+    assert Demo.single_2(:first) = "one"
   end
 
   test "enum inverse with atom values" do

@@ -405,6 +405,18 @@ defmodule Const do
       {key, eval_quoted_value(key, quoted_value, env)}
     end)
   end
+  defp eval_quoted_enum(_name, {key, _metadata, [quoted_value]}, env) do
+    # We have to treat single-valued enums as a special case because their
+    # quoted expression is not enclosed in a block or a keyword list. For
+    # example the expression:
+    #
+    #     enum single do
+    #       first "one"
+    #     end
+    #
+    # is quoted as: {:first, [line: 20], ["one"]}
+    [{key, eval_quoted_value(key, quoted_value, env)}]
+  end
   defp eval_quoted_enum(name, quoted_values, env) do
     eval_quoted_value(name, quoted_values, env)
   end
