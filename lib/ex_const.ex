@@ -12,35 +12,36 @@ defmodule Const do
   call, depending on the context where it was used.
 
   A module using `const` or `enum` macros can be defined in the following way:
+  ```elixir
+  defmodule Settings
+    use Const
+    import Bitwise, only: [bsl: 2]
 
-      defmodule Settings
-        use Const
-        import Bitwise, only: [bsl: 2]
+    @ar "AR"
+    @it "IT"
+    @us "US"
 
-        @ar "AR"
-        @it "IT"
-        @us "US"
+    const version, do: "1.0"
 
-        const version, do: "1.0"
+    const base_path, do: System.cwd()
 
-        const base_path, do: System.cwd()
+    const country_codes, do: [@ar, @it, @us]
 
-        const country_codes, do: [@ar, @it, @us]
+    enum country_code, do: [argentina: @ar, italy: @it, usa: @us]
 
-        enum country_code, do: [argentina: @ar, italy: @it, usa: @us]
+    enum color do
+      red   bsl(0xff, 16)
+      green bsl(0xff, 8)
+      blue  bsl(0xff, 0)
+    end
 
-        enum color do
-          red   bsl(0xff, 16)
-          green bsl(0xff, 8)
-          blue  bsl(0xff, 0)
-        end
-
-        enum color_tuple do
-          red   {255, 0, 0}
-          green {0, 255, 0}
-          blue  {0, 0, 255}
-        end
-      end
+    enum color_tuple do
+      red   {255, 0, 0}
+      green {0, 255, 0}
+      blue  {0, 0, 255}
+    end
+  end
+  ```
 
   As you can see, the constants can be assigned both literal values or
   expressions that will be resolved at compile-time.
@@ -64,17 +65,17 @@ defmodule Const do
   for the `const`.
 
   The single constants can be accessed with a nomal function invocation:
-
-      iex> require Settings
-      ...> Settings.version
-      "1.0"
+  ```elixir
+  require Settings
+  Settings.version
+  ```
 
   As the reference to the `const` will be replaced by its literal value, you
   can even use them in match expressions or in guards. e.g.
-
-      iex> require Settings
-      ...> Settings.version = "1.0"
-      "1.0"
+  ```elixir
+  require Settings
+  Settings.version = "1.0"
+  ```
 
   ## Enumerated Values
 
@@ -92,23 +93,25 @@ defmodule Const do
       end
 
   e.g.
-
-      enum country_code, do: [argentina: "AR", italy: "IT", usa: "US"]
+  ```elixir
+  enum country_code, do: [argentina: "AR", italy: "IT", usa: "US"]
+  ```
 
   Or:
-
-      enum country_code do
-        argentina "AR"
-        italy     "IT"
-        usa       "US"
-      end
+  ```elixir
+  enum country_code do
+    argentina "AR"
+    italy     "IT"
+    usa       "US"
+  end
+  ```
 
   For each `enum` instance, the macro will create the following additional macros
   and functions in the module where it was invoked:
 
     1. Macro with the name that was assigned to the `enum`. This macro will
        replace every reference to itself with its literal value (if it was called
-       with a literal atom as key or was referenced from a macth expression) or
+       with a literal atom as key or was referenced from a match expression) or
        with a call to the fallback function.
     2. Fallback function with a name formed by appending the string `_enum` to
        the name of the `enum` (e.g. `country_code_enum/1`).
@@ -117,55 +120,56 @@ defmodule Const do
        `enum` will be used and the other ones will be disregarded.
 
   e.g.
-
-      defmacro country_code(atom) :: String.t
-      def country_code_enum(atom) :: String.t
-      def from_country_code(String.t) :: atom
+  ```elixir
+  defmacro country_code(atom) :: String.t
+  def country_code_enum(atom) :: String.t
+  def from_country_code(String.t) :: atom
+  ```
 
   The enumerated values can be accessed with a function call:
-
-      iex> require Settings
-      ...> Settings.color(:blue)
-      255
+  ```elixir
+  require Settings
+  Settings.color(:blue)
+  ```
 
   And can also be used in match expressions or guards:
-
-      iex> require Settings
-      ...> import Settings
-      ...> value = "AR"
-      ...> case value do
-      ...>   country_code(:argentina) ->
-      ...>     {:ok, "Argentina"}
-      ...>   country_code(:italy) ->
-      ...>     {:ok, "Italy"}
-      ...>   code when code == country_code(:usa) ->
-      ...>     {:ok, "United States"}
-      ...>   _ ->
-      ...>     {:error, {:must_be_one_of, country_codes()}}
-      ...> end
+  ```elixir
+  require Settings
+  import Settings
+  value = "AR"
+  case value do
+    country_code(:argentina) ->
       {:ok, "Argentina"}
+    country_code(:italy) ->
+      {:ok, "Italy"}
+    code when code == country_code(:usa) ->
+      {:ok, "United States"}
+    _ ->
+      {:error, {:must_be_one_of, country_codes()}}
+  end
+  ```
 
   As the expressions assigned to constants will be resolved at compile-time,
   the previous function would be equivalent to the following one:
-
-      iex> value = "AR"
-      ...> case value do
-      ...>   "AR" -> {:ok, "Argentina"}
-      ...>   "IT" -> {:ok, "Italy"}
-      ...>   code when code == "US" -> {:ok, "United States"}
-      ...>   _ -> {:error, {:must_be_one_of, ["AR", "IT", "US"]}}
-      ...> end
-      {:ok, "Argentina"}
+  ```elixir
+  value = "AR"
+  case value do
+    "AR" -> {:ok, "Argentina"}
+    "IT" -> {:ok, "Italy"}
+    code when code == "US" -> {:ok, "United States"}
+    _ -> {:error, {:must_be_one_of, ["AR", "IT", "US"]}}
+  end
+  ```
 
   Sometimes, when an `enum` is referenced in the code, the key to its value is
   passed as an expression that cannot be resolved at compile-time. In those
   cases the expression will be expanded to a function invocation instead of to
   a literal value:
-
-      iex> require Settings
-      ...> key = :green
-      ...> Settings.color_tuple(key)
-      {0, 255, 0}
+  ```elixir
+  require Settings
+  key = :green
+  Settings.color_tuple(key)
+  ```
 
   This works because the macro replaces the reference to itself with a call to
   the fallback function. The name of the function is that of the `enum`
@@ -213,8 +217,9 @@ defmodule Const do
   to the constant.
 
   The syntax to define it looks like the following one:
-
-      const secret_key, do: "AABBCCDDEEFF"
+  ```elixir
+  const secret_key, do: "AABBCCDDEEFF"
+  ```
 
   Where `secret_key` is the name that will be used to reference the constant
   and `"AABBCCDDEEFF"` is what will be returned by it.
@@ -224,10 +229,10 @@ defmodule Const do
 
   Given that the macro will replace its invocation with the literal value, it
   can be used in a match expressions like the following one:
-
-      iex> require Settings
-      ...> Settings.color(:blue) = 0xff
-      0xff
+  ```elixir
+  require Settings
+  Settings.color(:blue) = 0xff
+  ```
 
   """
   defmacro const(quoted_name, do: quoted_value) do
@@ -258,19 +263,20 @@ defmodule Const do
 
   Two syntaxes are supported, the compact and the expanded one, very much like
   most constructs in Elixir. Here's a sample of what it looks like"
+  ```elixir
+  defmodule Defs
+    use Const
 
-      defmodule Defs
-        use Const
+    enum stock, do: [apple: "AAPL", facebook: "FB", google: "GOOG"]
 
-        enum stock, do: [apple: "AAPL", facebook: "FB", google: "GOOG"]
-
-        enum file_ext do
-          elixir ".ex"
-          erlang ".erl"
-          go     ".go"
-          rust   ".rs"
-        end
-      end
+    enum file_ext do
+      elixir ".ex"
+      erlang ".erl"
+      go     ".go"
+      rust   ".rs"
+    end
+  end
+  ```
 
   The enumerated values can be referenced by using the normal macro/function
   syntax, passing the key as argument to the macro.
@@ -278,8 +284,9 @@ defmodule Const do
 
   Given that the macro will replace its invocation with the literal value, it
   can be used in a match expressions like the following one:
-
-      Defs.stock(:google) = "GOOG"
+  ```elixir
+  Defs.stock(:google) = "GOOG"
+  ```
 
   """
   defmacro enum(quoted_name, do: quoted_values) do
