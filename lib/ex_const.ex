@@ -382,7 +382,7 @@ defmodule Const do
               #         "#{inspect quoted_key} as literal #{inspect quoted_value}")
               quote do: unquote(Macro.escape(quoted_value))
             :error ->
-              raise Const.Error, reason: :fetch, name: unquote(name), key: unescape_var(quoted_key)
+              raise Const.Error, reason: :fetch_key, name: unquote(name), key: unescape_var(quoted_key)
           end
         else
           mod = unquote(env.module)
