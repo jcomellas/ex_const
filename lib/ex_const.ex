@@ -374,7 +374,7 @@ defmodule Const do
   defp define_enum_expand_macro(name, fun_name, quoted_values, env) do
     quote do
       defmacro unquote(name)(quoted_key) do
-        if is_atom(quoted_key) or Macro.Env.in_match?(__CALLER__) do
+        if is_atom(quoted_key) or Macro.Env.in_match?(__CALLER__) or Macro.Env.in_guard?(__CALLER__) do
           # We must escape the evaluated value as the macro has to return a quoted expression.
           case Keyword.fetch(unquote(quoted_values), quoted_key) do
             {:ok, quoted_value} ->
