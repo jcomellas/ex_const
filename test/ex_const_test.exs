@@ -138,9 +138,9 @@ defmodule ConstTest do
 
   test "enum combined with macro resolved at compile-time used in match expression" do
     import Demo
-    import Bitwise
+    use Bitwise
 
-    assert color(:red) ||| color(:green) ||| color(:blue) = 0xffffff
+    assert 0xffffff = color(:red) ||| color(:green) ||| color(:blue)
   end
 
   test "enum with single value" do
