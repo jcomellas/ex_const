@@ -443,6 +443,7 @@ defmodule Const do
   @doc """
   Unescape a quoted variable name.
   """
+  def unescape_var({:__aliases__, _metadata, [key]}), do: key
   def unescape_var({key, _metadata, _args}), do: key
   def unescape_var(key) when is_atom(key), do: key
 end
