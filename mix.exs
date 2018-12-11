@@ -19,7 +19,7 @@ defmodule Const.Mixfile do
   end
 
   defp deps do
-    [{:ex_doc, "~> 0.18.4", only: :dev}]
+    [{:ex_doc, "~> 0.19", only: :dev}]
   end
 
   defp package do
