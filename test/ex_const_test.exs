@@ -51,7 +51,7 @@ defmodule Demo do
   const country_codes, do: [@ar, @br, @it, @us]
 
   # This function call will be resolved at compile-time.
-  const base_path, do: System.cwd()
+  const base_path, do: File.cwd!()
 
   enum atoms, do: [one: :abc, two: :cde, three: :ghi]
   enum strings, do: [one: "abc", two: "def", three: "ghi"]
