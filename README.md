@@ -11,6 +11,7 @@ call, depending on the context where it was used.
 
 The package can be installed by adding `ex_const` to your list of dependencies
 in `mix.exs`:
+
 ```elixir
 def deps do
   [{:ex_const, "~> 0.1.0"}]
@@ -24,6 +25,7 @@ be found at [https://hexdocs.pm/ex_const](https://hexdocs.pm/ex_const).
 ## Usage
 
 A module using `const` or `enum` macros can be defined in the following way:
+
 ```elixir
 defmodule Settings
   use Const
@@ -63,11 +65,15 @@ expressions that will be resolved at compile-time.
 You can create single constant values by using the `const` macro with the
 following syntax:
 
-    const <name>, do: <value>
+```elixir
+const <name>, do: <value>
+```
 
 e.g.
 
-    const version, do: "1.0"
+```elixir
+const version, do: "1.0"
+```
 
 The macro invocation will create and export another macro with the name that
 was set in the `const` declaration (e.g. `version/0`) and replace each
@@ -77,6 +83,7 @@ You can use any expression that can be resolved at compile-time as the value
 for the `const`.
 
 The single constants can be accessed with a nomal function invocation:
+
 ```elixir
 require Settings
 Settings.version
@@ -84,6 +91,7 @@ Settings.version
 
 As the reference to the `const` will be replaced by its literal value, you
 can even use them in match expressions or in guards. e.g.
+
 ```elixir
 require Settings
 Settings.version = "1.0"
@@ -94,22 +102,28 @@ Settings.version = "1.0"
 You can create enumerated values by using the `enum` macro with the compact
 syntax:
 
-    enum <name>, do: [<key_1>: <value_1>, <key_2>: <value_2>, ...]
+```elixir
+enum <name>, do: [<key_1>: <value_1>, <key_2>: <value_2>, ...]
+```
 
 Or with the expanded syntax:
 
-    enum <name> do
-      <key_1> <value_1>
-      <key_2> <value_2>
-      [...]
-    end
+```elixir
+enum <name> do
+  <key_1> <value_1>
+  <key_2> <value_2>
+  [...]
+end
+```
 
 e.g.
+
 ```elixir
 enum country_code, do: [argentina: "AR", italy: "IT", usa: "US"]
 ```
 
 Or:
+
 ```elixir
 enum country_code do
   argentina "AR"
@@ -132,6 +146,7 @@ and functions in the module where it was invoked:
      one in the `enum` will be used and the duplicates will be disregarded.
 
 e.g.
+
 ```elixir
 defmacro country_code(atom) :: String.t
 def country_code_enum(atom) :: String.t
@@ -139,12 +154,14 @@ def from_country_code(String.t) :: atom
 ```
 
 The enumerated values can be accessed with a function call:
+
 ```elixir
 require Settings
 Settings.color(:blue)
 ```
 
 And can also be used in match expressions or guards:
+
 ```elixir
 require Settings
 import Settings
@@ -163,6 +180,7 @@ end
 
 As the expressions assigned to constants will be resolved at compile-time,
 the previous function would be equivalent to the following one:
+
 ```elixir
 value = "AR"
 case value do
@@ -177,6 +195,7 @@ Sometimes, when an `enum` is referenced in the code, the key to its value is
 passed as an expression that cannot be resolved at compile-time. In those
 cases the expression will be expanded to a function invocation instead of to
 a literal value:
+
 ```elixir
 require Settings
 key = :green
