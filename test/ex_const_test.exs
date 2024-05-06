@@ -1,4 +1,4 @@
- # Demo module
+# Demo module
 defmodule Demo do
   use Const
 
@@ -12,26 +12,26 @@ defmodule Demo do
   const test_float, do: 10.0
   const test_tuple2, do: {:abcdef, "abcdef"}
   const test_tuple4, do: {:abcdef, "abcdef", 1234, 1234.0}
-  const test_list, do: [:abc, :def, 1234, {123, 456}, 'abcdef']
+  const test_list, do: [:abc, :def, 1234, {123, 456}, ~c"abcdef"]
   const test_keyword, do: [one: 1, two: 2, three: 3]
   const test_map, do: %{"abc" => 123, "def" => 456, "ghi" => 789}
 
   enum single_1 do
-    first "one"
+    first("one")
   end
 
   enum single_2, do: [first: "one"]
 
   enum color do
-    red   bsl(0xff, 16)
-    green bsl(0xff, 8)
-    blue  bsl(0xff, 0)
+    red(bsl(0xFF, 16))
+    green(bsl(0xFF, 8))
+    blue(bsl(0xFF, 0))
   end
 
   enum color_tuple do
-    red   {255, 0, 0}
-    green {0, 255, 0}
-    blue  {0, 0, 255}
+    red({255, 0, 0})
+    green({0, 255, 0})
+    blue({0, 0, 255})
   end
 
   enum color_str, do: [red: "red", green: "green", blue: "blue"]
@@ -42,10 +42,10 @@ defmodule Demo do
   @us "US"
 
   enum country_code do
-    argentina @ar
-    brazil    @br
-    italy     @it
-    usa       @us
+    argentina(@ar)
+    brazil(@br)
+    italy(@it)
+    usa(@us)
   end
 
   const country_codes, do: [@ar, @br, @it, @us]
@@ -58,14 +58,30 @@ defmodule Demo do
   enum ints, do: [one: 123, two: 456, three: 789]
   enum floats, do: [one: 123.1, two: 456.2, three: 789.3]
   enum tuples2, do: [one: {"123", 123}, two: {"456", 456}, three: {"789", 789}]
-  enum tuples4, do: [one: {"123", 123, :abc, 123.1}, two: {"456", 456, :def, 456.2},
-                     three: {"789", 789, :ghi, 789.3}]
-  enum lists, do: [one: ["123", "123", "123"], two: ["456", "456", "456"],
-                   three: ["789", "789", "789"]]
-  enum keywords, do: [one: [abc: "123", def: "456"], two: [ghi: "123", jkl: "456"],
-                      three: [mno: "123", pqr: "456"]]
-  enum maps, do: [one: %{abc: "123", def: "456"}, two: %{ghi: "123", jkl: "456"},
-                  three: %{mno: "123", pqr: "456"}]
+
+  enum tuples4,
+    do: [
+      one: {"123", 123, :abc, 123.1},
+      two: {"456", 456, :def, 456.2},
+      three: {"789", 789, :ghi, 789.3}
+    ]
+
+  enum lists,
+    do: [one: ["123", "123", "123"], two: ["456", "456", "456"], three: ["789", "789", "789"]]
+
+  enum keywords,
+    do: [
+      one: [abc: "123", def: "456"],
+      two: [ghi: "123", jkl: "456"],
+      three: [mno: "123", pqr: "456"]
+    ]
+
+  enum maps,
+    do: [
+      one: %{abc: "123", def: "456"},
+      two: %{ghi: "123", jkl: "456"},
+      three: %{mno: "123", pqr: "456"}
+    ]
 
   enum duplicates, do: [one: "123", two: "456", three: "456"]
 end
@@ -84,47 +100,47 @@ defmodule ConstTest do
   require Demo
 
   test "const set to atom" do
-    assert Demo.test_atom = :abcdef
+    assert Demo.test_atom() = :abcdef
   end
 
   test "const set to string" do
-    assert Demo.test_string = "abcdef"
+    assert Demo.test_string() = "abcdef"
   end
 
   test "const set to integer" do
-    assert Demo.test_int = 100
+    assert Demo.test_int() = 100
   end
 
   test "const set to float" do
-    assert Demo.test_float = 10.0
+    assert Demo.test_float() = 10.0
   end
 
   test "const set to tuple (2 elements)" do
-    assert Demo.test_tuple2 = {:abcdef, "abcdef"}
+    assert Demo.test_tuple2() = {:abcdef, "abcdef"}
   end
 
   test "const set to tuple (4 elements)" do
-    assert Demo.test_tuple4 = {:abcdef, "abcdef", 1234, 1234.0}
+    assert Demo.test_tuple4() = {:abcdef, "abcdef", 1234, 1234.0}
   end
 
   test "const set to list" do
-    assert Demo.test_list = [:abc, :def, 1234, {123, 456}, 'abcdef']
+    assert Demo.test_list() = [:abc, :def, 1234, {123, 456}, ~c"abcdef"]
   end
 
   test "const set to keyword" do
-    assert Demo.test_keyword = [one: 1, two: 2, three: 3]
+    assert Demo.test_keyword() = [one: 1, two: 2, three: 3]
   end
 
   test "const set to map" do
-    assert Demo.test_map = %{"abc" => 123, "def" => 456, "ghi" => 789}
+    assert Demo.test_map() = %{"abc" => 123, "def" => 456, "ghi" => 789}
   end
 
   test "const with compile-time expansion assigned to it" do
-    assert byte_size(Demo.base_path) > 0
+    assert byte_size(Demo.base_path()) > 0
   end
 
   test "const with module attribute assigned to it" do
-    assert Demo.country_codes = ["AR", "BR", "IT", "US"]
+    assert Demo.country_codes() = ["AR", "BR", "IT", "US"]
   end
 
   test "enum with literal value as argument (comparison)" do
@@ -139,15 +155,15 @@ defmodule ConstTest do
 
   test "enum with variable as argument (comparison)" do
     c = :green
-    assert Demo.color(c) == 0xff00
-    assert c == Demo.from_color(0xff00)
+    assert Demo.color(c) == 0xFF00
+    assert c == Demo.from_color(0xFF00)
   end
 
   test "enum combined with macro resolved at compile-time used in match expression" do
     import Demo
-    use Bitwise
+    import Bitwise
 
-    assert 0xffffff = color(:red) ||| color(:green) ||| color(:blue)
+    assert 0xFFFFFF = color(:red) ||| color(:green) ||| color(:blue)
   end
 
   test "enum with single value" do
@@ -192,7 +208,7 @@ defmodule ConstTest do
 
   test "enum inverse with keyword values" do
     assert Demo.keywords(:two) = [ghi: "123", jkl: "456"]
-    assert Demo.from_keywords([ghi: "123", jkl: "456"]) == :two
+    assert Demo.from_keywords(ghi: "123", jkl: "456") == :two
   end
 
   test "enum inverse with map values" do
@@ -209,7 +225,7 @@ defmodule ConstTest do
     assert Demo.single_1_values() = ["one"]
     assert Demo.single_2_values() = ["one"]
     assert Demo.strings_values() = ["abc", "def", "ghi"]
-    assert Demo.color_values() = [0xff0000, 0x00ff00, 0x0000ff]
+    assert Demo.color_values() = [0xFF0000, 0x00FF00, 0x0000FF]
     assert Demo.color_tuple_values() = [{255, 0, 0}, {0, 255, 0}, {0, 0, 255}]
     assert Demo.color_str_values() = ["red", "green", "blue"]
     assert Demo.country_code_values() = ["AR", "BR", "IT", "US"]

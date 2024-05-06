@@ -251,12 +251,14 @@ defmodule Const do
 
   defp define_const(name, quoted_value, env) when is_atom(name) do
     # Define macro to expand non-enumerated constants.
-    expr = quote do
-      defmacro unquote(name)() do
-        # We must escape the evaluated value, as the macro has to return a quoted expression.
-        unquote(Macro.escape(eval_quoted_value(name, quoted_value, env)))
+    expr =
+      quote do
+        defmacro unquote(name)() do
+          # We must escape the evaluated value, as the macro has to return a quoted expression.
+          unquote(Macro.escape(eval_quoted_value(name, quoted_value, env)))
+        end
       end
-    end
+
     # IO.puts("AST generated for '#{name}' const macro: #{inspect expr}")
     expr
   end
@@ -324,8 +326,10 @@ defmodule Const do
     eval_values = eval_quoted_enum(name, quoted_values, env)
     # IO.puts("Creating '#{name}' enum for evaluated values: #{inspect eval_values}")
     if Keyword.keyword?(eval_values) do
-      fun_name = Atom.to_string(name) <> "_enum"
-      |> String.to_atom()
+      fun_name =
+        (Atom.to_string(name) <> "_enum")
+        |> String.to_atom()
+
       fallback_fun = define_enum_fallback_fun(name, fun_name, eval_values)
       expand_macro = define_enum_expand_macro(name, fun_name, eval_values, env)
       inverse_fun = define_enum_inverse_fun(name, eval_values)
@@ -340,61 +344,77 @@ defmodule Const do
   end
 
   defp define_enum_fallback_fun(name, fun_name, quoted_values) do
-    quoted_fun = for {key, quoted_value} <- quoted_values do
-      # IO.puts("Generating fallback function '#{fun_name}' for key '#{key}' with value #{inspect quoted_value}")
-      # FIXME: verify that the key and the value are constants
-      quote do
-        def unquote(fun_name)(unquote(key)) do
-          unquote(quoted_value)
+    quoted_fun =
+      for {key, quoted_value} <- quoted_values do
+        # IO.puts("Generating fallback function '#{fun_name}' for key '#{key}' with value #{inspect quoted_value}")
+        # FIXME: verify that the key and the value are constants
+        quote do
+          def unquote(fun_name)(unquote(key)) do
+            unquote(quoted_value)
+          end
         end
       end
-    end
-    quoted_fun_tail = quote do
-      def unquote(fun_name)(key) do
-        raise Const.Error, reason: :fetch_key, name: unquote(name), key: unescape_var(key)
+
+    quoted_fun_tail =
+      quote do
+        def unquote(fun_name)(key) do
+          raise Const.Error, reason: :fetch_key, name: unquote(name), key: unescape_var(key)
+        end
       end
-    end
+
     [quoted_fun, quoted_fun_tail]
   end
 
   defp define_enum_inverse_fun(name, quoted_values) do
-    fun_name = "from_" <> Atom.to_string(name)
-    |> String.to_atom()
+    fun_name =
+      ("from_" <> Atom.to_string(name))
+      |> String.to_atom()
+
     # Discard duplicated values in the inverse functions.
-    quoted_fun = quoted_values
-    |> Enum.uniq_by(fn {_key, quoted_value} -> quoted_value end)
-    |> Enum.map(fn {key, quoted_value} ->
-      # IO.puts("Generating inverse function '#{fun_name}' for value #{inspect quoted_value} with key '#{key}'")
+    quoted_fun =
+      quoted_values
+      |> Enum.uniq_by(fn {_key, quoted_value} -> quoted_value end)
+      |> Enum.map(fn {key, quoted_value} ->
+        # IO.puts("Generating inverse function '#{fun_name}' for value #{inspect quoted_value} with key '#{key}'")
+        quote do
+          def unquote(fun_name)(unquote(quoted_value)) do
+            unquote(key)
+          end
+        end
+      end)
+
+    quoted_fun_tail =
       quote do
-        def unquote(fun_name)(unquote(quoted_value)) do
-          unquote(key)
+        def unquote(fun_name)(quoted_value) do
+          raise Const.Error, reason: :fetch_value, name: unquote(name), value: quoted_value
         end
       end
-    end)
-    quoted_fun_tail = quote do
-      def unquote(fun_name)(quoted_value) do
-        raise Const.Error, reason: :fetch_value, name: unquote(name), value: quoted_value
-      end
-    end
+
     [quoted_fun, quoted_fun_tail]
   end
 
   defp define_enum_expand_macro(name, fun_name, quoted_values, env) do
     quote do
       defmacro unquote(name)(quoted_key) do
-        if is_atom(quoted_key) or Macro.Env.in_match?(__CALLER__) or Macro.Env.in_guard?(__CALLER__) do
+        if is_atom(quoted_key) or Macro.Env.in_match?(__CALLER__) or
+             Macro.Env.in_guard?(__CALLER__) do
           # We must escape the evaluated value as the macro has to return a quoted expression.
           case Keyword.fetch(unquote(quoted_values), quoted_key) do
             {:ok, quoted_value} ->
               # IO.puts("Expanding reference to enum '#{unquote(name)}' for " <>
               #         "#{inspect quoted_key} as literal #{inspect quoted_value}")
               quote do: unquote(Macro.escape(quoted_value))
+
             :error ->
-              raise Const.Error, reason: :fetch_key, name: unquote(name), key: unescape_var(quoted_key)
+              raise Const.Error,
+                reason: :fetch_key,
+                name: unquote(name),
+                key: unescape_var(quoted_key)
           end
         else
           mod = unquote(env.module)
           fun = unquote(fun_name)
+
           # IO.puts("Expanding reference to enum '#{unquote(name)}' for #{Const.unescape_var(quoted_key)} as " <>
           #         "function call to #{inspect mod}.#{fun}(#{inspect quoted_key})")
           quote do
@@ -432,8 +452,6 @@ defmodule Const do
       (Atom.to_string(fun_name) <> "_values")
       |> String.to_atom()
 
-
-
     quote do
       defmacro unquote(name)() do
         if Macro.Env.in_match?(__CALLER__) or Macro.Env.in_guard?(__CALLER__) do
@@ -465,6 +483,7 @@ defmodule Const do
       {key, eval_quoted_value(key, quoted_value, env)}
     end)
   end
+
   defp eval_quoted_enum(_name, {key, _metadata, [quoted_value]}, env) do
     # We have to treat single-valued enums as a special case because their
     # quoted expression is not enclosed in a block or a keyword list. For
@@ -477,6 +496,7 @@ defmodule Const do
     # is quoted as: {:first, [line: 20], ["one"]}
     [{key, eval_quoted_value(key, quoted_value, env)}]
   end
+
   defp eval_quoted_enum(name, quoted_values, env) do
     eval_quoted_value(name, quoted_values, env)
   end
@@ -485,13 +505,16 @@ defmodule Const do
     try do
       # First expand the quoted value to resolve module attributes and then
       # evaluate to resolve function calls.
-      eval_result = quoted_value
-      |> Macro.expand_once(env)
-      |> Code.eval_quoted([], env)
+      eval_result =
+        quoted_value
+        |> Macro.expand_once(env)
+        |> Code.eval_quoted([], env)
+
       case eval_result do
-        {eval_value, []}    ->
+        {eval_value, []} ->
           # IO.puts("Expanded key '#{name}' from #{inspect quoted_value} to #{inspect eval_value} (unquoted)")
           Macro.escape(eval_value)
+
         {_value, vars} ->
           raise Const.Error, reason: :unresolved, name: name, vars: vars
       end
@@ -514,6 +537,7 @@ defmodule Const.Error do
   def exception(opts) do
     reason = opts[:reason]
     name = opts[:name]
+
     %Const.Error{
       reason: reason,
       name: name,
@@ -525,14 +549,18 @@ defmodule Const.Error do
     case reason do
       :eval ->
         "const or enum '#{name}' was assigned a value that could not be evaluated at compile-time"
+
       :unresolved ->
-        "const or enum '#{name}' was assigned a value that depends on the following unresolved variables: #{inspect opts[:vars]}"
+        "const or enum '#{name}' was assigned a value that depends on the following unresolved variables: #{inspect(opts[:vars])}"
+
       :assign ->
         "enum '#{name}' was not assigned a list of key-value pairs"
+
       :fetch_key ->
         "key '#{opts[:key]}' is not present in enum '#{name}'"
+
       :fetch_value ->
-        "value #{inspect opts[:value]} is not assigned to any key in enum '#{name}'"
+        "value #{inspect(opts[:value])} is not assigned to any key in enum '#{name}'"
     end
   end
 end
