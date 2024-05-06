@@ -3,8 +3,8 @@ defmodule Const.Mixfile do
 
   def project do
     [app: :ex_const,
-     version: "0.2.4",
-     elixir: "~> 1.4",
+     version: "0.3.0",
+     elixir: "~> 1.9",
      description: "Constants and Enumerated Values for Elixir",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,

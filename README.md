@@ -14,7 +14,7 @@ in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:ex_const, "~> 0.1.0"}]
+  [{:ex_const, "~> 0.3.0"}]
 end
 ```
 
