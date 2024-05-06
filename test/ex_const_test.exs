@@ -70,6 +70,13 @@ defmodule Demo do
   enum duplicates, do: [one: "123", two: "456", three: "456"]
 end
 
+defmodule DemoGuards do
+  require Demo
+
+  def is_country_code?(v) when v in Demo.country_code_values(), do: true
+  def is_country_code?(_), do: false
+end
+
 defmodule ConstTest do
   use ExUnit.Case
   doctest Const
@@ -196,5 +203,20 @@ defmodule ConstTest do
   test "enum inverse with duplicated values" do
     assert Demo.duplicates(:three) = "456"
     assert Demo.from_duplicates("456") == :two
+  end
+
+  test "enum values" do
+    assert Demo.single_1_values() = ["one"]
+    assert Demo.single_2_values() = ["one"]
+    assert Demo.strings_values() = ["abc", "def", "ghi"]
+    assert Demo.color_values() = [0xff0000, 0x00ff00, 0x0000ff]
+    assert Demo.color_tuple_values() = [{255, 0, 0}, {0, 255, 0}, {0, 0, 255}]
+    assert Demo.color_str_values() = ["red", "green", "blue"]
+    assert Demo.country_code_values() = ["AR", "BR", "IT", "US"]
+    assert Demo.atoms_values() = [:abc, :cde, :ghi]
+    assert Demo.tuples2_values() = [{"123", 123}, {"456", 456}, {"789", 789}]
+
+    assert DemoGuards.is_country_code?(Demo.country_code(:argentina)) == true
+    assert DemoGuards.is_country_code?("ZZ") == false
   end
 end

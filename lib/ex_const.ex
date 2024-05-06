@@ -118,12 +118,18 @@ defmodule Const do
     3. Function that will retrieve the key corresponding to a value in the `enum`.
        If there are is more than one key with the same value, the first in the
        `enum` will be used and the other ones will be disregarded.
+    4. Macro with a name formed by appending the string `_values` to the name of
+       the enum (e.g. `country_code_values/0`).
+    5. Fallback function with a name formed by appending the string `_enum_values`
+       to the name of the values (e.g. `country_code_enum_values/0`).
 
   e.g.
   ```elixir
   defmacro country_code(atom) :: String.t
   def country_code_enum(atom) :: String.t
   def from_country_code(String.t) :: atom
+  defmacro country_code_values() :: [String.t()]
+  def country_code_enum_values() :: [String.t()]
   ```
 
   The enumerated values can be accessed with a function call:
@@ -323,7 +329,9 @@ defmodule Const do
       fallback_fun = define_enum_fallback_fun(name, fun_name, eval_values)
       expand_macro = define_enum_expand_macro(name, fun_name, eval_values, env)
       inverse_fun = define_enum_inverse_fun(name, eval_values)
-      expr = [fallback_fun, expand_macro, inverse_fun]
+      values_macro = define_enum_values_expand_macro(name, fun_name, eval_values, env)
+      values_fun = define_enum_values_fallback_fun(name, eval_values)
+      expr = [fallback_fun, expand_macro, inverse_fun, values_macro, values_fun]
       # IO.puts("AST generated for '#{name}' enum macro: #{inspect expr}")
       expr
     else
@@ -391,6 +399,58 @@ defmodule Const do
           #         "function call to #{inspect mod}.#{fun}(#{inspect quoted_key})")
           quote do
             apply(unquote(mod), unquote(fun), [unquote(quoted_key)])
+          end
+        end
+      end
+    end
+  end
+
+  defp define_enum_values_fallback_fun(name, quoted_values) do
+    fun_name =
+      (Atom.to_string(name) <> "_enum_values")
+      |> String.to_atom()
+
+    # Discard duplicated values in the values function.
+    quoted_values_list =
+      quoted_values
+      |> Keyword.values()
+      |> Enum.uniq()
+
+    quote do
+      def unquote(fun_name)() do
+        unquote(quoted_values_list)
+      end
+    end
+  end
+
+  defp define_enum_values_expand_macro(name, fun_name, quoted_values, env) do
+    name =
+      (Atom.to_string(name) <> "_values")
+      |> String.to_atom()
+
+    fun_name =
+      (Atom.to_string(fun_name) <> "_values")
+      |> String.to_atom()
+
+
+
+    quote do
+      defmacro unquote(name)() do
+        if Macro.Env.in_match?(__CALLER__) or Macro.Env.in_guard?(__CALLER__) do
+          quoted_values_list =
+            unquote(quoted_values)
+            |> Keyword.values()
+            |> Enum.uniq()
+
+          quote do
+            unquote(Macro.escape(quoted_values_list))
+          end
+        else
+          mod = unquote(env.module)
+          fun = unquote(fun_name)
+
+          quote do
+            apply(unquote(mod), unquote(fun), [])
           end
         end
       end
