@@ -2,8 +2,6 @@
 defmodule Demo do
   use Const
 
-  require Bitwise
-
   import Bitwise, only: [bsl: 2]
 
   const test_atom, do: :abcdef
