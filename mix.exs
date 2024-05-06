@@ -25,7 +25,7 @@ defmodule Const.Mixfile do
   defp package do
     [files: ["lib", "test", "mix.exs", "README*", "LICENSE*"],
      maintainers: ["Juan Jose Comellas"],
-     licenses: ["Apache 2.0"],
+     licenses: ["Apache-2.0"],
      links: %{"GitHub" => "https://github.com/jcomellas/ex_const"}]
   end
 end
